@@ -11,22 +11,19 @@ module.exports = {
                     compress: {
                         drop_console: true,
                         drop_debugger: true,
+                        passes: 2,
                     },
                     mangle: true,
-                    output: {
-                        comments: false,
-                    },
+                    output: { comments: false },
                 },
                 extractComments: false,
             }),
         ],
         usedExports: true,
         sideEffects: false,
-        runtimeChunk: false,
     },
 
     target: "web",
-
     entry: './bin/nanofl-haxe.js',
 
     resolve: {
@@ -50,28 +47,8 @@ module.exports = {
     },
 
     performance: {
-        maxEntrypointSize: 250000,
-        maxAssetSize: 250000,
-        hints: 'warning',
-    },
-
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: [
-                            ['@babel/preset-env', {
-                                modules: false,
-                                useBuiltIns: 'usage',
-                                corejs: 3,
-                            }]
-                        ],
-                    }
-                }
-            }
-        ]
+        maxEntrypointSize: 200000,
+        maxAssetSize: 200000,
+        hints: 'error',
     }
 }
