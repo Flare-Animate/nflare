@@ -2,24 +2,23 @@ VERSION := $(shell cat ../engine/nanofl/engine/Version.hx | grep player | grep -
 
 DEST_JS := ../ide/bin/templates/scripts/nanofl-$(VERSION).js
 
-build: node_modules ../plugins/bin/filters/StdFiltersPlugin.js engine
+.PHONY: build engine node_modules clean
+
+build: node_modules engine ../plugins/bin/filters/StdFiltersPlugin.js
 	haxe build.hxml
 	npx webpack
-	echo "window.THREE = window.THREE || {};" > $(DEST_JS)
-	echo "window.THREE_addons_GLTFLoader = window.THREE_addons_GLTFLoader || {};" >> $(DEST_JS)
-	echo "" >> $(DEST_JS)
-	cat bin/nanofl-bundle.js >> $(DEST_JS)
-	cat ../plugins/bin/filters/StdFiltersPlugin.js >> $(DEST_JS)
+	mkdir -p $$(dirname $(DEST_JS))
+	cat bin/nanofl-bundle.js ../plugins/bin/filters/StdFiltersPlugin.js > $(DEST_JS)
 
 engine:
 	npx symlink-dir ../engine engine
 
 ../plugins/bin/filters/StdFiltersPlugin.js:
 	make -C ../plugins
-	
+
 node_modules:
-	npm i
+	npm ci
 
-PHONY: build
-
-.SUFFIXES:
+clean:
+	rm -rf bin/
+	rm -f $(DEST_JS)
