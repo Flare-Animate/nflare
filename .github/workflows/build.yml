@@ -1,0 +1,103 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'nflare-*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            ext: ''
+          - os: macos-latest
+            platform: macos
+            ext: '.app'
+          - os: windows-latest
+            platform: windows
+            ext: '.exe'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: latest
+
+      - name: Install Neutralino CLI
+        run: npm install -g @neutralinojs/cli
+
+      - name: Install player deps
+        run: cd player && npm ci && cd ..
+
+      - name: Build player
+        run: cd player && make build && cd ..
+
+      - name: Install IDE deps
+        run: cd ide && npm ci && cd ..
+
+      - name: Build IDE
+        run: cd ide && make build && cd ..
+
+      - name: Initialize Neutralino app
+        run: |
+          mkdir -p neutralino-app
+          cd neutralino-app
+          neutralino create nflare || true
+          cd nflare
+          neutralino build --release-build
+
+      - name: Copy IDE assets to Neutralino
+        run: |
+          cp -r ide/bin/resources/app/* neutralino-app/nflare/resources/
+          cp -r ide/bin/templates neutralino-app/nflare/resources/
+
+      - name: Build Neutralino package
+        run: |
+          cd neutralino-app/nflare
+          neutralino build --release-build
+
+      - name: Create artifacts directory
+        run: mkdir -p dist
+
+      - name: Package build
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            cp neutralino-app/nflare/dist/nflare/nflare dist/nflare-linux
+            chmod +x dist/nflare-linux
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            cp -r neutralino-app/nflare/dist/nflare/nflare.app dist/
+            ditto -c -k --sequesterRsrc --keepParent dist/nflare.app dist/nflare-macos.zip
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp neutralino-app/nflare/dist/nflare/nflare.exe dist/nflare-windows.exe
+          fi
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nflare-${{ matrix.platform }}-${{ github.ref_name }}
+          path: dist/*
+          retention-days: 30
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
