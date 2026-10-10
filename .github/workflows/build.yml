@@ -37,7 +37,7 @@ jobs:
           haxe-version: '4.3.7'
 
       - name: Install Neutralino CLI
-        run: npm install -g @neutralinojs/cli
+        run: npm install -g @neutralinojs/neu
 
       - name: Install player deps
         run: cd player && npm install && cd ..
@@ -55,9 +55,9 @@ jobs:
         run: |
           mkdir -p neutralino-app
           cd neutralino-app
-          neutralino create nflare || true
+          neu create nflare || true
           cd nflare
-          neutralino build --release-build
+          neu build --release-build
 
       - name: Copy IDE assets to Neutralino
         run: |
@@ -67,7 +67,7 @@ jobs:
       - name: Build Neutralino package
         run: |
           cd neutralino-app/nflare
-          neutralino build --release-build
+          neu build --release-build
 
       - name: Create artifacts directory
         run: mkdir -p dist
