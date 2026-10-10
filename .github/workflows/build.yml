@@ -34,7 +34,7 @@ jobs:
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: latest
+          haxe-version: '4.3.7'
 
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/cli
