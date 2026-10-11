@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Haxelib dependencies
         run: |
-          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery)
+          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery bootstrap)
           for lib in "${libs[@]}"; do
             echo "::group::Instalando paquete: $lib"
             haxelib install "$lib" > /dev/null 2>&1 || haxelib install "$lib"
