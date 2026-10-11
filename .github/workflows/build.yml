@@ -33,16 +33,20 @@ jobs:
 
       - name: Install Haxelib dependencies
         run: |
-          haxelib install stdlib
-          haxelib install datatools
-          haxelib install jsprop
-          haxelib install easeljs
-          haxelib install threejs
-          haxelib install jquery
+          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery)
+          for lib in "${libs[@]}"; do
+            echo "::group::Instalando paquete: $lib"
+            haxelib install "$lib" > /dev/null 2>&1 || haxelib install "$lib"
+            echo "::endgroup::"
+            echo "✔ Instalado: $lib"
+          done
+
           # Registrar las dependencias locales de los módulos automáticamente
           for d in modules/*/library; do
             if [ -f "$d/haxelib.json" ]; then
-              haxelib dev $(basename $(dirname $(dirname $d))) $d
+              mod_name=$(basename $(dirname $(dirname $d)))
+              haxelib dev "$mod_name" "$d" > /dev/null 2>&1
+              echo "✔ Módulo local registrado: $mod_name"
             fi
           done
         shell: bash
