@@ -26,15 +26,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
           haxe-version: '4.3.7'
+
+      - name: Install Haxelib dependencies
+        run: |
+          haxelib install stdlib
+          # Registrar o instalar dependencias de los módulos si es necesario
+          for d in modules/*/library; do
+            if [ -f "$d/haxelib.json" ]; then
+              haxelib dev $(basename $(dirname $(dirname $d))) $d
+            fi
+          done
+        shell: bash
 
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/neu
