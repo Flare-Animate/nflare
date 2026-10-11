@@ -37,6 +37,8 @@ jobs:
           haxelib install datatools
           haxelib install jsprop
           haxelib install easeljs
+          haxelib install threejs
+          haxelib install jquery
           # Registrar las dependencias locales de los módulos automáticamente
           for d in modules/*/library; do
             if [ -f "$d/haxelib.json" ]; then
