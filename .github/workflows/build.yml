@@ -45,7 +45,7 @@ jobs:
             wquery 
             hxnodejs-re-htmlparser 
             undoqueue 
-            injector 
+            injector
             codegen
           )
           for lib in "${libs[@]}"; do
@@ -61,13 +61,19 @@ jobs:
               mod_name=$(basename "$d")
               if [ -f "$d/haxelib.json" ]; then
                 haxelib dev "$mod_name" "$d"
-                echo "✔ Módulo local registrado: $mod_name -> $d"
               elif [ -f "$d/library/haxelib.json" ]; then
                 haxelib dev "$mod_name" "$d/library"
-                echo "✔ Módulo local registrado: $mod_name -> $d/library"
               fi
+              echo "✔ Módulo local registrado: $mod_name"
             fi
           done
+        shell: bash
+
+      - name: Build Modules
+        run: |
+          cd modules
+          make build
+          cd ..
         shell: bash
       
       - name: Install Neutralino CLI
