@@ -33,7 +33,22 @@ jobs:
 
       - name: Install Haxelib dependencies
         run: |
-          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery bootstrap wquery hxnodejs-re-htmlparser undoqueue)
+          libs=(
+            stdlib 
+            datatools 
+            jsprop 
+            easeljs 
+            threejs 
+            threejs-addons 
+            jquery 
+            bootstrap 
+            wquery 
+            hxnodejs-re-htmlparser 
+            undoqueue 
+            injector 
+            hxelectron 
+            codegen
+          )
           for lib in "${libs[@]}"; do
             echo "::group::Instalando paquete: $lib"
             haxelib install "$lib" > /dev/null 2>&1 || haxelib install "$lib"
@@ -45,7 +60,6 @@ jobs:
           for d in modules/*; do
             if [ -d "$d" ]; then
               mod_name=$(basename "$d")
-              # Verificamos si tiene un haxelib.json dentro o en una subcarpeta library/
               if [ -f "$d/haxelib.json" ]; then
                 haxelib dev "$mod_name" "$d"
                 echo "✔ Módulo local registrado: $mod_name -> $d"
