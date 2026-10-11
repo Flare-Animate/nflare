@@ -46,7 +46,6 @@ jobs:
             hxnodejs-re-htmlparser 
             undoqueue 
             injector 
-            hxelectron 
             codegen
           )
           for lib in "${libs[@]}"; do
