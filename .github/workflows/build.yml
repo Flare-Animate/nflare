@@ -35,6 +35,7 @@ jobs:
         run: |
           haxelib install stdlib
           haxelib install datatools
+          haxelib install jsprop
           # Registrar las dependencias locales de los módulos automáticamente
           for d in modules/*/library; do
             if [ -f "$d/haxelib.json" ]; then
