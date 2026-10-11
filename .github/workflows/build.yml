@@ -41,12 +41,18 @@ jobs:
             echo "✔ Instalado: $lib"
           done
 
-          # Registrar las dependencias locales de los módulos automáticamente
-          for d in modules/*/library; do
-            if [ -f "$d/haxelib.json" ]; then
-              mod_name=$(basename $(dirname $(dirname $d)))
-              haxelib dev "$mod_name" "$d" > /dev/null 2>&1
-              echo "✔ Módulo local registrado: $mod_name"
+          # Registrar TODOS los módulos locales dentro de modules/ correctamente
+          for d in modules/*; do
+            if [ -d "$d" ]; then
+              mod_name=$(basename "$d")
+              # Verificamos si tiene un haxelib.json dentro o en una subcarpeta library/
+              if [ -f "$d/haxelib.json" ]; then
+                haxelib dev "$mod_name" "$d"
+                echo "✔ Módulo local registrado: $mod_name -> $d"
+              elif [ -f "$d/library/haxelib.json" ]; then
+                haxelib dev "$mod_name" "$d/library"
+                echo "✔ Módulo local registrado: $mod_name -> $d/library"
+              fi
             fi
           done
         shell: bash
