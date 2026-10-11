@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Haxelib dependencies
         run: |
-          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery bootstrap wquery hxnodejs-re-htmlparser)
+          libs=(stdlib datatools jsprop easeljs threejs threejs-addons jquery bootstrap wquery hxnodejs-re-htmlparser undoqueue)
           for lib in "${libs[@]}"; do
             echo "::group::Instalando paquete: $lib"
             haxelib install "$lib" > /dev/null 2>&1 || haxelib install "$lib"
@@ -50,7 +50,7 @@ jobs:
             fi
           done
         shell: bash
-
+      
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/neu
 
