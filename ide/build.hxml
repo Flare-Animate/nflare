@@ -1,4 +1,4 @@
---js bin\resources\app\haxe.js
+--js bin/resources/app/haxe.js
 --define js-es=6
 --define ide
 --class-path engine
