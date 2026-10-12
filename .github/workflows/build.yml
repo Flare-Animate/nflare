@@ -107,8 +107,15 @@ jobs:
 
       - name: Copy IDE assets to Neutralino
         run: |
-          cp -r ide/bin/resources/app/* neutralino-app/nflare/resources/
-          cp -r ide/bin/templates neutralino-app/nflare/resources/
+          # 1. Asegurar que la carpeta de destino exista
+          mkdir -p neutralino-app/nflare/resources/
+          
+          # 2. Copiar el contenido de NanoFl (donde está index.html) directamente a la raíz de resources
+          cp -r ide/static/NanoFl/* neutralino-app/nflare/resources/
+          
+          # 3. Copiar las otras carpetas/bibliotecas de ide/static que no sean NanoFl
+          # Esto evita duplicados y mantiene las rutas relativas limpias
+          rsync -av --exclude='NanoFl' ide/static/ neutralino-app/nflare/resources/
 
       - name: Build Neutralino package
         run: |
