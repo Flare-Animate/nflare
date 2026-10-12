@@ -34,18 +34,16 @@ jobs:
       - name: Install Haxelib dependencies
         run: |
           libs=(
-            stdlib 
-            datatools 
-            jsprop 
-            easeljs 
-            threejs 
-            threejs-addons 
-            jquery 
-            bootstrap 
-            wquery 
-            hxnodejs-re-htmlparser 
-            undoqueue 
-            injector
+            stdlib
+            datatools
+            jsprop
+            easeljs
+            threejs
+            threejs-addons
+            bootstrap
+            wquery
+            hxnodejs-re-htmlparser
+            undoqueue
             codegen
           )
           for lib in "${libs[@]}"; do
@@ -54,6 +52,13 @@ jobs:
             echo "::endgroup::"
             echo "✔ Instalado: $lib"
           done
+
+          # Las versiones de haxelib de estas libs están desactualizadas respecto al código:
+          #   - jquery   1.5.4 no tiene js.jquery.ui.Progressbar
+          #   - injector 1.2.0 no tiene Injector.addSingleton / getService
+          # Se instalan desde git, fijadas a un commit para builds reproducibles.
+          haxelib git jquery   https://github.com/yar3333/haxe-jquery   83764af library
+          haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
 
           # Registrar TODOS los módulos locales dentro de modules/ correctamente
           for d in modules/*; do
@@ -75,7 +80,7 @@ jobs:
           make build
           cd ..
         shell: bash
-      
+
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/neu
 
