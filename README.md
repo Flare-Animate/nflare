@@ -1,6 +1,6 @@
 # nflare
 
-**nflare** is a powerful 2D animation software designed for creating cartoons, banners, games, and web content. Conceived as an advanced **fork of nanofl**, it maintains a lightweight footprint while modernizing the core graphics stack, improving user workflow, and extending features for modern multimedia creators.
+**nflare**, soon to be absorbed into **Flare** proper during the upcoming rewrite, is a powerful 2D animation software designed for creating cartoons, banners, games, and web content. Conceived as an advanced **fork of nanofl**, it maintains a lightweight footprint while modernizing the core graphics stack, improving user workflow, and extending features for modern multimedia creators.
 
 ## 🚀 Key Features
 
