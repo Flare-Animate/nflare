@@ -112,7 +112,8 @@ jobs:
       - name: Build Neutralino package
         run: |
           cd neutralino-app/nflare
-          neu build --release-build
+          neu build --release
+
 
       - name: Create artifacts directory
         run: mkdir -p dist
