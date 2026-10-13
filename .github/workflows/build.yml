@@ -136,22 +136,6 @@ jobs:
         shell: bash
 
 
-      - name: Create artifacts directory
-        run: mkdir -p dist
-
-      - name: Package build
-        run: |
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            cp neutralino-app/nflare/dist/nflare/nflare dist/nflare-linux
-            chmod +x dist/nflare-linux
-          elif [ "${{ matrix.os }}" = "macos-13" ]; then
-            cp -r neutralino-app/nflare/dist/nflare/nflare.app dist/
-            ditto -c -k --sequesterRsrc --keepParent dist/nflare.app dist/nflare-macos.zip
-          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp neutralino-app/nflare/dist/nflare/nflare.exe dist/nflare-windows.exe
-          fi
-        shell: bash
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
