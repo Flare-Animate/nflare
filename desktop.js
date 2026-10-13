@@ -1,5 +1,5 @@
 
-import { Webview } from "bun-webview";
+import { Webview } from "@webviewjs/webview";
 import { join } from "path";
 
 const webview = new Webview();
