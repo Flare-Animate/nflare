@@ -119,11 +119,22 @@ jobs:
           rsync -av --exclude='nanofl' ide/static/ neutralino-app/nflare/resources/
         shell: bash
 
-      - name: Build Neutralino package
+      - name: Package build
         run: |
-          cd neutralino-app/nflare
-          neu build --release
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            # Copia el binario de Linux (no tiene extensión)
+            cp neutralino-app/nflare/dist/nflare/nflare-* dist/nflare-linux || cp neutralino-app/nflare/dist/nflare/* dist/nflare-linux
+            chmod +x dist/nflare-linux
+          elif [ "${{ matrix.os }}" = "macos-13" ]; then
+            # Copia el paquete .app de macOS
+            cp -r neutralino-app/nflare/dist/nflare/*.app dist/nflare.app
+            ditto -c -k --sequesterRsrc --keepParent dist/nflare.app dist/nflare-macos.zip
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Copia el ejecutable de Windows (.exe)
+            cp neutralino-app/nflare/dist/nflare/*.exe dist/nflare-windows.exe
+          fi
         shell: bash
+
 
       - name: Create artifacts directory
         run: mkdir -p dist
