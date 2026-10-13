@@ -105,12 +105,18 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Auto-install Latest Desktop Library
+        # Forzamos a Bun a descargar la última versión directo en el disco sin requerir package.json previo
+        run: bun add bun-webview
+        shell: bash
+
       - name: Compile Single Portable Binary
         run: |
           mkdir -p dist-target
-          # Bun lee desktop.js, auto-descarga bun-webview y mete la carpeta nanofl dentro del binario
+          # Compila el ejecutable metiendo todos los archivos estáticos dentro
           bun build ./desktop.js --compile --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
         shell: bash
+
 
       # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
 
