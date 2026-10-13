@@ -102,33 +102,28 @@ jobs:
           cd neutralino-app
           neu create nflare || true
           cd nflare
-          neu build --release
+          # Nota: Quitamos el neu build de aquí porque se sobreescribiría al copiar los assets del IDE más abajo
+        shell: bash
 
-
-            - name: Copy IDE assets to Neutralino
+      - name: Copy IDE assets to Neutralino
         run: |
           # 1. Asegurar que la carpeta de destino exista
           mkdir -p neutralino-app/nflare/resources/
 
-          # 2. Copiar el contenido de nanofl (en minúsculas) directamente a la raíz de resources
-          cp -r ide/static/nanofl/* neutralino-app/nflare/resources/
+          # 2. Copiar el contenido de nanofl de manera segura con rsync (evita fallos si faltan archivos o subcarpetas vacías)
+          if [ -d "ide/static/nanofl" ]; then
+            rsync -av ide/static/nanofl/ neutralino-app/nflare/resources/
+          fi
 
-          # 3. Copiar las otras carpetas de ide/static excluyendo nanofl
+          # 3. Copiar las otras carpetas de ide/static excluyendo nanofl para evitar duplicados
           rsync -av --exclude='nanofl' ide/static/ neutralino-app/nflare/resources/
-
-          
-          # 2. Copiar el contenido de NanoFl (donde está index.html) directamente a la raíz de resources
-          cp -r ide/static/NanoFl/* neutralino-app/nflare/resources/
-          
-          # 3. Copiar las otras carpetas/bibliotecas de ide/static que no sean NanoFl
-          # Esto evita duplicados y mantiene las rutas relativas limpias
-          rsync -av --exclude='NanoFl' ide/static/ neutralino-app/nflare/resources/
+        shell: bash
 
       - name: Build Neutralino package
         run: |
           cd neutralino-app/nflare
           neu build --release
-
+        shell: bash
 
       - name: Create artifacts directory
         run: mkdir -p dist
