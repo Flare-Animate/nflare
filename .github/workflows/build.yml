@@ -100,9 +100,8 @@ jobs:
         run: |
           mkdir -p neutralino-app
           cd neutralino-app
-          neu create nflare || true
-          cd nflare
-          # Nota: Quitamos el neu build de aquí porque se sobreescribiría al copiar los assets del IDE más abajo
+          # Usamos npx para asegurar compatibilidad global de la CLI de Neutralino
+          npx @neutralinojs/neu create nflare || true
         shell: bash
 
       - name: Copy IDE assets to Neutralino
@@ -110,36 +109,47 @@ jobs:
           # 1. Asegurar que la carpeta de destino exista
           mkdir -p neutralino-app/nflare/resources/
 
-          # 2. Copiar el contenido de nanofl de manera segura con rsync (evita fallos si faltan archivos o subcarpetas vacías)
+          # 2. En lugar de rsync, usamos cp -r que funciona en Bash en los 3 sistemas operativos.
+          # Copiamos primero el contenido de nanofl directo a la raíz de resources
           if [ -d "ide/static/nanofl" ]; then
-            rsync -av ide/static/nanofl/ neutralino-app/nflare/resources/
+            cp -r ide/static/nanofl/* neutralino-app/nflare/resources/
           fi
 
-          # 3. Copiar las otras carpetas de ide/static excluyendo nanofl para evitar duplicados
-          rsync -av --exclude='nanofl' ide/static/ neutralino-app/nflare/resources/
+          # 3. Copiamos el resto de las carpetas de ide/static de forma limpia. 
+          # Para evitar usar rsync, copiamos todo y luego borramos el duplicado de nanofl si existiera.
+          cp -r ide/static/* neutralino-app/nflare/resources/
+          rm -rf neutralino-app/nflare/resources/nanofl
+        shell: bash
+
+      - name: Build Neutralino package
+        run: |
+          cd neutralino-app/nflare
+          # Forzamos la instalación de dependencias locales del template y buildeamos con npx
+          npm install
+          npx @neutralinojs/neu build --release
+        shell: bash
+
+      - name: Create artifacts directory
+        run: mkdir -p dist
         shell: bash
 
       - name: Package build
         run: |
-          # 1. Mostrar en el log qué carpetas y archivos creó realmente Neutralino (útil para debuggear)
-          echo "=== Contenido de la carpeta dist de Neutralino ==="
-          ls -R neutralino-app/nflare/dist/ || echo "No se encontró la carpeta dist"
+          echo "=== Verificando qué carpetas generó Neutralino ==="
+          ls -R neutralino-app/nflare/dist/ || echo "La carpeta dist sigue sin aparecer"
           echo "=================================================="
 
-          # 2. Copiar los archivos usando rutas relativas independientes del nombre del proyecto
+          # Copiar los archivos usando comodines tolerantes al nombre del binario interno
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            # Busca cualquier ejecutable compilado para Linux (usualmente contiene 'linux')
-            cp neutralino-app/nflare/dist/*/nflare-linux* dist/nflare-linux || cp neutralino-app/nflare/dist/*/*linux* dist/nflare-linux
+            cp neutralino-app/nflare/dist/*/*linux* dist/nflare-linux || cp neutralino-app/nflare/dist/*/* dist/nflare-linux
             chmod +x dist/nflare-linux
           elif [ "${{ matrix.os }}" = "macos-13" ]; then
-            # Si genera un .app bundle o binario de Mac, comprime directamente toda la estructura interna de dist
-            cd neutralino-app/nflare/dist/* && zip -r ../../../../dist/nflare-macos.zip . && cd -
+            cp -r neutralino-app/nflare/dist/*/*mac* dist/nflare-mac || cp -r neutralino-app/nflare/dist/*/* dist/nflare-mac
+            zip -r dist/nflare-macos.zip dist/nflare-mac
           elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            # Busca cualquier archivo .exe dentro de la subcarpeta generada
-            cp neutralino-app/nflare/dist/*/*.exe dist/nflare-windows.exe
+            cp neutralino-app/nflare/dist/*/*win*.exe dist/nflare-windows.exe || cp neutralino-app/nflare/dist/*/*.exe dist/nflare-windows.exe
           fi
         shell: bash
-
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
