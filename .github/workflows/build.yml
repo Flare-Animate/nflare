@@ -59,7 +59,8 @@ jobs:
 
           # Clonar dependencias fijadas a commits estables
           haxelib git jquery   https://github.com/yar3333/haxe-jquery 83764af library
-          https://github.com/yar3333/haxe-injector 9aafb86 library
+
+          haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
 
           # Registrar módulos locales en la carpeta modules/
           for d in modules/*; do
