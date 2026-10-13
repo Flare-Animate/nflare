@@ -1,5 +1,5 @@
-// Agregando @latest, Bun descarga la última versión disponible sin usar package.json
-import { Webview } from "bun-webview@latest";
+
+import { Webview } from "bun-webview";
 import { join } from "path";
 
 const webview = new Webview();
