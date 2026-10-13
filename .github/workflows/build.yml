@@ -99,12 +99,18 @@ jobs:
           cd ..
         shell: bash
 
-      # --- CONFIGURACIÓN DEL ENTORNO DE COMPILACIÓN DE ESCRITORIO (BUN) ---
       
+
       - name: Setup Bun Environment
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+
+      # PASO CLAVE ADICIONAL: Instalar la dependencia real antes de construir
+      - name: Install WebviewJS Dependency
+        run: |
+          bun add @webviewjs/webview
+        shell: bash
 
       - name: Compile Single Portable Binary
         run: |
