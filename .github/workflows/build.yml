@@ -57,11 +57,14 @@ jobs:
             echo "✔ Instalado: $lib"
           done
 
-          # Clonar dependencias fijadas a commits estables
-          haxelib git jquery   https://github.com   83764af library
-          haxelib git injector https://github.com 9aafb86 library
+          # Las versiones de haxelib de estas libs están desactualizadas respecto al código:
+          #   - jquery   1.5.4 no tiene js.jquery.ui.Progressbar
+          #   - injector 1.2.0 no tiene Injector.addSingleton / getService
+          # Se instalan desde git, fijadas a un commit para builds reproducibles.
+          haxelib git jquery   https://github.com/yar3333/haxe-jquery   83764af library
+          haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
 
-          # Registrar módulos locales en la carpeta modules/
+          # Registrar TODOS los módulos locales dentro de modules/ correctamente
           for d in modules/*; do
             if [ -d "$d" ]; then
               mod_name=$(basename "$d")
