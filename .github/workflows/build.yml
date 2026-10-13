@@ -8,8 +8,11 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-13, windows-latest]
         include:
@@ -24,7 +27,8 @@ jobs:
             ext: '.exe'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
 
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
@@ -53,14 +57,11 @@ jobs:
             echo "✔ Instalado: $lib"
           done
 
-          # Las versiones de haxelib de estas libs están desactualizadas respecto al código:
-          #   - jquery   1.5.4 no tiene js.jquery.ui.Progressbar
-          #   - injector 1.2.0 no tiene Injector.addSingleton / getService
-          # Se instalan desde git, fijadas a un commit para builds reproducibles.
-          haxelib git jquery   https://github.com/yar3333/haxe-jquery   83764af library
-          haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
+          # Clonar dependencias fijadas a commits estables
+          haxelib git jquery   https://github.com   83764af library
+          haxelib git injector https://github.com 9aafb86 library
 
-          # Registrar TODOS los módulos locales dentro de modules/ correctamente
+          # Registrar módulos locales en la carpeta modules/
           for d in modules/*; do
             if [ -d "$d" ]; then
               mod_name=$(basename "$d")
@@ -81,88 +82,50 @@ jobs:
           cd ..
         shell: bash
 
-      - name: Install Neutralino CLI
-        run: npm install -g @neutralinojs/neu
-
-      - name: Install player deps
-        run: cd player && npm install && cd ..
-
-      - name: Build player
-        run: cd player && make build && cd ..
-
-      - name: Install IDE deps
-        run: cd ide && npm install && cd ..
-
-      - name: Build IDE
-        run: cd ide && make build && cd ..
-
-      - name: Initialize Neutralino app
+      - name: Install & Build Player
         run: |
-          mkdir -p neutralino-app
-          cd neutralino-app
-          # Usamos npx para asegurar compatibilidad global de la CLI de Neutralino
-          npx @neutralinojs/neu create nflare || true
-        shell: bash
-
-      - name: Copy IDE assets to Neutralino
-        run: |
-          # 1. Asegurar que la carpeta de destino exista
-          mkdir -p neutralino-app/nflare/resources/
-
-          # 2. En lugar de rsync, usamos cp -r que funciona en Bash en los 3 sistemas operativos.
-          # Copiamos primero el contenido de nanofl directo a la raíz de resources
-          if [ -d "ide/static/nanofl" ]; then
-            cp -r ide/static/nanofl/* neutralino-app/nflare/resources/
-          fi
-
-          # 3. Copiamos el resto de las carpetas de ide/static de forma limpia. 
-          # Para evitar usar rsync, copiamos todo y luego borramos el duplicado de nanofl si existiera.
-          cp -r ide/static/* neutralino-app/nflare/resources/
-          rm -rf neutralino-app/nflare/resources/nanofl
-        shell: bash
-
-      - name: Build Neutralino package
-        run: |
-          cd neutralino-app/nflare
-          # Forzamos la instalación de dependencias locales del template y buildeamos con npx
+          cd player
           npm install
-          npx @neutralinojs/neu build --release
+          make build
+          cd ..
         shell: bash
 
-      - name: Create artifacts directory
-        run: mkdir -p dist
-        shell: bash
-
-      - name: Package build
+      - name: Install & Build IDE
         run: |
-          echo "=== Verificando qué carpetas generó Neutralino ==="
-          ls -R neutralino-app/nflare/dist/ || echo "La carpeta dist sigue sin aparecer"
-          echo "=================================================="
-
-          # Copiar los archivos usando comodines tolerantes al nombre del binario interno
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            cp neutralino-app/nflare/dist/*/*linux* dist/nflare-linux || cp neutralino-app/nflare/dist/*/* dist/nflare-linux
-            chmod +x dist/nflare-linux
-          elif [ "${{ matrix.os }}" = "macos-13" ]; then
-            cp -r neutralino-app/nflare/dist/*/*mac* dist/nflare-mac || cp -r neutralino-app/nflare/dist/*/* dist/nflare-mac
-            zip -r dist/nflare-macos.zip dist/nflare-mac
-          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp neutralino-app/nflare/dist/*/*win*.exe dist/nflare-windows.exe || cp neutralino-app/nflare/dist/*/*.exe dist/nflare-windows.exe
-          fi
+          cd ide
+          npm install
+          make build
+          cd ..
         shell: bash
 
-      - name: Upload artifacts
+      # --- CONFIGURACIÓN DEL ENTORNO DE COMPILACIÓN DE ESCRITORIO (BUN) ---
+      
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Compile Single Portable Binary
+        run: |
+          mkdir -p dist-target
+          # Bun lee desktop.js, auto-descarga bun-webview y mete la carpeta nanofl dentro del binario
+          bun build ./desktop.js --compile --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
+        shell: bash
+
+      # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
+
+      - name: Upload Artifacts to Workflow
         uses: actions/upload-artifact@v4
         with:
           name: nflare-${{ matrix.platform }}-${{ github.ref_name }}
-          path: dist/*
+          path: dist-target/*
           retention-days: 30
 
-      - name: Create Release
+      - name: Create Production GitHub Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/*
+          files: dist-target/*
           draft: false
           prerelease: false
         env:
