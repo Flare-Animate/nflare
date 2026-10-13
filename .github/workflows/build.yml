@@ -11,7 +11,9 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: "${{ matrix.os }}" # Corregido: Expresión envuelta entre comillas
+
+    runs-on: "${{ matrix.os }}"
+
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +39,10 @@ jobs:
           haxe-version: '4.3.3'
 
       - name: Install Haxelib dependencies
+        shell: bash
         run: |
+          set -e
+
           libs=(
             stdlib
             datatools
@@ -51,68 +56,65 @@ jobs:
             undoqueue
             codegen
           )
+
           for lib in "${libs[@]}"; do
-            echo "::group::Instalando paquete: $lib"
+            echo "::group::Installing package: $lib"
             haxelib install "$lib" > /dev/null 2>&1 || haxelib install "$lib"
             echo "::endgroup::"
-            echo "✔ Instalado: $lib"
+            echo "Installed: $lib"
           done
 
-          # Clonar dependencias fijadas a commits estables
-          haxelib git jquery   https://github.com/yar3333/haxe-jquery 83764af library
+          haxelib git jquery https://github.com/yar3333/haxe-jquery 83764af library
           haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
 
-          # Registrar módulos locales en la carpeta modules/
           for d in modules/*; do
             if [ -d "$d" ]; then
               mod_name=$(basename "$d")
+
               if [ -f "$d/haxelib.json" ]; then
                 haxelib dev "$mod_name" "$d"
               elif [ -f "$d/library/haxelib.json" ]; then
                 haxelib dev "$mod_name" "$d/library"
               fi
-              echo "✔ Módulo local registrado: $mod_name"
+
+              echo "Local module registered: $mod_name"
             fi
           done
-        shell: bash
 
       - name: Build Modules
+        shell: bash
         run: |
+          set -e
           cd modules
           make build
-          cd ..
-        shell: bash
 
       - name: Install & Build Player
+        shell: bash
         run: |
+          set -e
           cd player
           npm install
           make build
-          cd ..
-        shell: bash
 
       - name: Install & Build IDE
+        shell: bash
         run: |
+          set -e
           cd ide
           npm install
           make build
-          cd ..
-        shell: bash
-
-      
 
       - name: Setup Bun Environment
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
-      # PASO CLAVE ADICIONAL: Instalar la dependencia real antes de construir
       - name: Install WebviewJS Dependency
+        shell: bash
         run: |
           bun add @webviewjs/webview
-        shell: bash
 
-            - name: Verify Static Files
+      - name: Verify Static Files
         shell: bash
         run: |
           set -e
@@ -140,20 +142,29 @@ jobs:
           test -f dist-target/package/ide/static/nanofl/index.html
 
           find dist-target/package -type f | sort
-      # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
+
+      - name: Package Application
+        shell: bash
+        run: |
+          set -e
+          cd dist-target
+          7z a -tzip \
+            "nflare-${{ matrix.platform }}-${{ github.ref_name }}.zip" \
+            package
 
       - name: Upload Artifacts to Workflow
         uses: actions/upload-artifact@v4
         with:
           name: nflare-${{ matrix.platform }}-${{ github.ref_name }}
-          path: dist-target/*
+          path: dist-target/nflare-${{ matrix.platform }}-${{ github.ref_name }}.zip
+          if-no-files-found: error
           retention-days: 30
 
       - name: Create Production GitHub Release
+        if: startsWith(github.ref, 'refs/tags/nflare-')
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/nflare-') # Optimizado para validar tu prefijo de tag
         with:
-          files: dist-target/*
+          files: dist-target/nflare-${{ matrix.platform }}-${{ github.ref_name }}.zip
           draft: false
           prerelease: false
         env:
