@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p dist-target
           # Compila el ejecutable metiendo todos los archivos estáticos dentro
-          bun build ./desktop.js --compile --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
+          bun build ./desktop.js --compile --minify --bytecode --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
         shell: bash
 
       # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
