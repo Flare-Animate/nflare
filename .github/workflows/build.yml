@@ -112,13 +112,34 @@ jobs:
           bun add @webviewjs/webview
         shell: bash
 
-      - name: Compile Single Portable Binary
-        run: |
-          mkdir -p dist-target
-          # Compila el ejecutable metiendo todos los archivos estáticos dentro
-          bun build ./desktop.js --compile --minify --bytecode --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
+            - name: Verify Static Files
         shell: bash
+        run: |
+          set -e
+          test -d ide/static
+          test -f ide/static/nanofl/index.html
+          find ide/static -type f | sort
 
+      - name: Compile Portable Binary
+        shell: bash
+        run: |
+          set -e
+
+          mkdir -p dist-target/package
+
+          bun build ./desktop.js \
+            --compile \
+            --minify \
+            --bytecode \
+            --embed-files \
+            --outfile="dist-target/package/nflare-${{ matrix.platform }}${{ matrix.ext }}"
+
+          mkdir -p dist-target/package/ide
+          cp -a ide/static dist-target/package/ide/static
+
+          test -f dist-target/package/ide/static/nanofl/index.html
+
+          find dist-target/package -type f | sort
       # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
 
       - name: Upload Artifacts to Workflow
