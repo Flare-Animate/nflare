@@ -121,17 +121,22 @@ jobs:
 
       - name: Package build
         run: |
+          # 1. Mostrar en el log qué carpetas y archivos creó realmente Neutralino (útil para debuggear)
+          echo "=== Contenido de la carpeta dist de Neutralino ==="
+          ls -R neutralino-app/nflare/dist/ || echo "No se encontró la carpeta dist"
+          echo "=================================================="
+
+          # 2. Copiar los archivos usando rutas relativas independientes del nombre del proyecto
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            # Copia el binario de Linux (no tiene extensión)
-            cp neutralino-app/nflare/dist/nflare/nflare-* dist/nflare-linux || cp neutralino-app/nflare/dist/nflare/* dist/nflare-linux
+            # Busca cualquier ejecutable compilado para Linux (usualmente contiene 'linux')
+            cp neutralino-app/nflare/dist/*/nflare-linux* dist/nflare-linux || cp neutralino-app/nflare/dist/*/*linux* dist/nflare-linux
             chmod +x dist/nflare-linux
           elif [ "${{ matrix.os }}" = "macos-13" ]; then
-            # Copia el paquete .app de macOS
-            cp -r neutralino-app/nflare/dist/nflare/*.app dist/nflare.app
-            ditto -c -k --sequesterRsrc --keepParent dist/nflare.app dist/nflare-macos.zip
+            # Si genera un .app bundle o binario de Mac, comprime directamente toda la estructura interna de dist
+            cd neutralino-app/nflare/dist/* && zip -r ../../../../dist/nflare-macos.zip . && cd -
           elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            # Copia el ejecutable de Windows (.exe)
-            cp neutralino-app/nflare/dist/nflare/*.exe dist/nflare-windows.exe
+            # Busca cualquier archivo .exe dentro de la subcarpeta generada
+            cp neutralino-app/nflare/dist/*/*.exe dist/nflare-windows.exe
           fi
         shell: bash
 
