@@ -1,8 +1,9 @@
- name: Build & Release
+name: Build & Release
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
     tags:
       - 'nflare-*'
 
@@ -10,7 +11,7 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: ${{ matrix.os }}
+    runs-on: "${{ matrix.os }}" # Corregido: Expresión envuelta entre comillas
     strategy:
       fail-fast: false
       matrix:
@@ -59,7 +60,6 @@ jobs:
 
           # Clonar dependencias fijadas a commits estables
           haxelib git jquery   https://github.com/yar3333/haxe-jquery 83764af library
-
           haxelib git injector https://github.com/yar3333/haxe-injector 9aafb86 library
 
           # Registrar módulos locales en la carpeta modules/
@@ -106,14 +106,12 @@ jobs:
         with:
           bun-version: latest
 
-
       - name: Compile Single Portable Binary
         run: |
           mkdir -p dist-target
           # Compila el ejecutable metiendo todos los archivos estáticos dentro
           bun build ./desktop.js --compile --embed-files --outfile=dist-target/nflare-${{ matrix.platform }}${{ matrix.ext }}
         shell: bash
-
 
       # --- PUBLICACIÓN AUTOMÁTICA DE ARTEFACTOS Y RELEASES ---
 
@@ -126,7 +124,7 @@ jobs:
 
       - name: Create Production GitHub Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/nflare-') # Optimizado para validar tu prefijo de tag
         with:
           files: dist-target/*
           draft: false
